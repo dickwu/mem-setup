@@ -16,26 +16,159 @@ The system tracks three types of insights:
 
 ```
 <project>/
-  .claude/commands/
-    mem-load.md          # Auto-loads rules before each task
-    mem-save.md          # Extracts insights after each task
+  .claude/commands/       # Claude Code
+    mem-load.md
+    mem-save.md
+  .cursor/rules/          # Cursor (if detected)
+    mem-load.mdc
+    mem-save.mdc
   knowledge/
-    INDEX.md             # Routes to domain folders
+    INDEX.md              # Routes to domain folders
     <domain>/
-      knowledge.md       # Facts and patterns
-      hypotheses.md      # Need more data
-      rules.md           # Confirmed - apply by default
+      knowledge.md        # Facts and patterns
+      hypotheses.md       # Need more data
+      rules.md            # Confirmed - apply by default
 ```
 
 ## Setup Steps
 
-### 1. Create the Commands
+### 1. Detect the Agent
 
-Read `references/mem-load-template.md` and write its contents to `.claude/commands/mem-load.md` in the project root.
+Check which AI coding agent is being used and set the command directory:
 
-Read `references/mem-save-template.md` and write its contents to `.claude/commands/mem-save.md` in the project root.
+| Agent | Command path | Extension |
+|-------|-------------|-----------|
+| Claude Code | `.claude/commands/` | `.md` |
+| Cursor | `.cursor/rules/` | `.mdc` |
+| Codex | `.codex/commands/` | `.md` |
+| Other | `.agents/skills/` (universal) | `.md` |
 
-### 2. Create the Knowledge Directory
+Create the command directory if it doesn't exist.
+
+### 2. Create mem-load Command
+
+Write the following content to the command file (e.g., `.claude/commands/mem-load.md`):
+
+~~~markdown
+---
+name: mem-load
+description: Auto-load domain knowledge at task start. Reads /knowledge/INDEX.md, finds relevant domain folders for the current task, loads rules.md (apply by default) and hypotheses.md (check if testable). Invoke manually when switching domains mid-conversation or when working in a domain you haven't loaded yet.
+---
+
+# Memory Load
+
+Load relevant domain knowledge before starting work. This ensures confirmed rules are applied and testable hypotheses are tracked.
+
+## Steps
+
+1. **Read the index** — read `/knowledge/INDEX.md` to see all available domains
+2. **Match domains** — identify which domains are relevant to the current task based on the user's request, file paths, and topic keywords
+3. **Load rules** — read `rules.md` in each relevant domain. These are confirmed patterns (5+ confirmations). Apply them by default without being asked
+4. **Load hypotheses** — read `hypotheses.md` in each relevant domain. Note which ones could be tested or observed during this task
+5. **Brief the user** — one-line summary:
+
+```
+Loaded: [domain1] (N rules, M hypotheses), [domain2] (N rules, M hypotheses)
+Watching: [hypothesis that could be tested today]
+```
+
+## What to Do With Loaded Knowledge
+
+- **Rules**: Follow them. They're confirmed patterns. If a rule conflicts with the current task, note the conflict but still follow the rule unless the user explicitly overrides
+- **Hypotheses**: Watch for confirmation or contradiction during the task. Don't change your approach based on hypotheses — they're unconfirmed. Just observe and note for `/mem-save` later
+- **Knowledge**: Use as context. These are facts that help you understand the codebase
+
+Load multiple domains when tasks span boundaries. When uncertain, load the domain — better to have context you don't need than miss a rule you should follow.
+~~~
+
+### 3. Create mem-save Command
+
+Write the following content to the command file (e.g., `.claude/commands/mem-save.md`):
+
+~~~markdown
+---
+name: mem-save
+description: Save domain knowledge insights after completing a task. Extracts facts, patterns, and observations from the current work and stores them in /knowledge/ domain folders. Promotes hypotheses to rules at 5+ confirmations, demotes rules when contradicted. Use when finishing a task, or when the user says done/finished/complete.
+---
+
+# Memory Save
+
+Extract insights from the completed task and persist them to the knowledge system.
+
+## Steps
+
+### 1. Reflect on the Task
+
+Ask yourself:
+- What did I learn about the codebase that wasn't already in knowledge.md?
+- Did any hypothesis get confirmed or contradicted?
+- Did I discover a new pattern that should be tracked?
+- Did I make a mistake that revealed a rule worth recording?
+
+### 2. Identify the Domain
+
+Match insights to existing domain folders in `/knowledge/INDEX.md`. If no folder fits, create a new domain folder with all three files (knowledge.md, hypotheses.md, rules.md) and add it to INDEX.md.
+
+### 3. Categorize and Write
+
+For each insight, decide where it goes:
+
+**knowledge.md** — Confirmed facts and patterns
+```
+- **[topic]**: [fact] (observed [date])
+```
+
+**hypotheses.md** — Patterns that need more data
+```
+- **[topic]**: [hypothesis] (confirmations: N/5, first observed [date])
+```
+
+**rules.md** — Confirmed 5+ times, apply by default
+```
+- **[topic]**: [rule] (promoted [date], confirmed N times)
+```
+
+### 4. Promotion Check
+
+Scan `hypotheses.md` in relevant domains. If any hypothesis now has 5+ confirmations:
+- Remove it from hypotheses.md
+- Add it to rules.md with `(promoted [today's date], confirmed N times)`
+- Tell the user: "Promoted to rule: [hypothesis]"
+
+### 5. Demotion Check
+
+If today's work contradicted an existing rule in rules.md:
+- Remove it from rules.md
+- Add it back to hypotheses.md with `(demoted [today's date], contradicted by: [reason])`
+- Reset confirmation count to 0
+- Tell the user: "Demoted rule: [rule] — contradicted by [reason]"
+
+### 6. Summary
+
+Report what was saved:
+```
+Saved to [domain]:
+  + N new knowledge entries
+  + N new hypotheses
+  ^ N hypothesis confirmations
+  * N promotions to rules
+  v N demotions from rules
+```
+
+## Ask Before Saving
+
+Before writing, briefly list what you plan to save and ask: "Save these insights?" This gives the user a chance to add, remove, or correct entries before they're persisted.
+
+## Writing Good Entries
+
+- Be specific and actionable — future sessions need to understand and apply these
+- Include dates so staleness can be assessed
+- One insight per bullet point
+- Don't duplicate existing entries — update them instead
+- Skip things derivable from reading the code — focus on non-obvious patterns
+~~~
+
+### 4. Create the Knowledge Directory
 
 Create the `knowledge/` directory in the project root with an `INDEX.md` file:
 
@@ -48,7 +181,7 @@ Routes to each domain folder. Each folder contains `knowledge.md` (facts), `hypo
 |--------|------|-------------|
 ```
 
-### 3. Create Initial Domain Folders
+### 5. Create Initial Domain Folders
 
 Ask the user what domains are relevant to their project. Common examples:
 - `api` — backend patterns, routing, error handling
@@ -89,9 +222,9 @@ Confirmed patterns — apply by default.
 
 Add each domain to `knowledge/INDEX.md`.
 
-### 4. Add CLAUDE.md Instructions
+### 6. Add Project Instructions
 
-Append this section to the project's `CLAUDE.md` (create the file if it doesn't exist):
+Append this section to the project's instruction file (`CLAUDE.md`, `.cursorrules`, or equivalent). Create the file if it doesn't exist:
 
 ```markdown
 ## Domain Knowledge System
@@ -101,12 +234,12 @@ Before starting any task, run `/mem-load` to load relevant domain rules and hypo
 When a task is complete (user says "done", "finished", "complete", or work is wrapped up), ask: "Want me to save insights from this task? (`/mem-save`)" — then run `/mem-save` if they agree.
 ```
 
-### 5. Confirm Setup
+### 7. Confirm Setup
 
 Tell the user:
 ```
 Knowledge system installed:
-  /mem-load — auto-loads domain rules at task start (via CLAUDE.md)
+  /mem-load — auto-loads domain rules at task start
   /mem-save — extracts and saves insights when tasks complete
   /knowledge/ — domain folders created: [list domains]
 

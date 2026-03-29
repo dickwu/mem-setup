@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "mem-setup": {
+      "source": "dickwu/mem-setup",
+      "sourceType": "github",
+      "computedHash": "c171e0311f53c68049f9a81fc74596da103396c3784ebb56108ee747a34904bc"
+    }
+  }
+}

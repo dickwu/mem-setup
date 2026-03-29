@@ -24,12 +24,16 @@ A Claude Code skill that installs a self-improving domain knowledge system for a
 ## Install
 
 ```bash
-npx skills add dickwu/mem-setup
+claude install-skill /path/to/mem-setup
+```
+
+Or download the `.skill` file and install:
+
+```bash
+claude install-skill mem-setup.skill
 ```
 
 Then run `/mem-setup` in your project to initialize the knowledge directory.
-
-Works with Claude Code, Cursor, Codex, and any agent supporting the `.agents/skills/` convention.
 
 ## How It Works
 
@@ -56,9 +60,9 @@ After running `/mem-setup`, your project gets:
 
 ```
 your-project/
-  .claude/commands/       # Claude Code (or .cursor/rules/ for Cursor)
-    mem-load.md
-    mem-save.md
+  .claude/commands/
+    mem-load.md           # Auto-loads rules before tasks
+    mem-save.md           # Extracts insights after tasks
   knowledge/
     INDEX.md              # Routes to domain folders
     api/                  # Example domain
