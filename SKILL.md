@@ -88,7 +88,7 @@ Write the following content to the command file (e.g., `.claude/commands/mem-sav
 ~~~markdown
 ---
 name: mem-save
-description: Save domain knowledge insights after completing a task. Extracts facts, patterns, and observations from the current work and stores them in /knowledge/ domain folders. Promotes hypotheses to rules at 5+ confirmations, demotes rules when contradicted. Use when finishing a task, or when the user says done/finished/complete.
+description: Save domain knowledge insights after completing a task. Extracts facts, patterns, and observations from the current work and stores them in /knowledge/ domain folders. Promotes hypotheses to rules at 5+ confirmations, demotes rules when contradicted. Use when finishing a task, when the user says done/finished/complete, or when your output contains summary keywords like Complete/Summary/Total indicating task wrap-up.
 ---
 
 # Memory Save
@@ -231,7 +231,7 @@ Append this section to the project's instruction file (`CLAUDE.md`, `.cursorrule
 
 Before starting any task, run `/mem-load` to load relevant domain rules and hypotheses from `/knowledge/`. Rules are confirmed patterns — apply them by default.
 
-When a task is complete (user says "done", "finished", "complete", or work is wrapped up), ask: "Want me to save insights from this task? (`/mem-save`)" — then run `/mem-save` if they agree.
+When a task is complete — user says "done", "finished", "complete", or your own output contains summary keywords like "Complete", "Summary", "Total" — ask: "Want me to save insights from this task? (`/mem-save`)" — then run `/mem-save` if they agree.
 ```
 
 ### 7. Confirm Setup
