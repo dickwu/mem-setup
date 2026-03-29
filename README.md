@@ -27,9 +27,9 @@ A Claude Code skill that installs a self-improving domain knowledge system for a
 npx skills add dickwu/mem-setup
 ```
 
-Then run `/mem-setup` in your project to initialize the knowledge directory.
-
 Works with Claude Code, Cursor, Codex, and any agent supporting the `.agents/skills/` convention.
+
+**After installing, run `/mem-setup` in your AI coding agent to initialize the knowledge directory.** This creates the `/knowledge/` folder structure, installs `/mem-load` and `/mem-save` commands, and adds auto-load instructions to your project's `CLAUDE.md` (or equivalent).
 
 ## How It Works
 
