@@ -4,7 +4,15 @@ A Claude Code skill that installs a self-improving domain knowledge system for a
 
 ## What It Does
 
-`/mem-setup` creates a persistent knowledge management system that helps Claude learn from your codebase over time. It tracks facts, hypotheses, and confirmed rules — so patterns discovered in one session are automatically applied in future sessions.
+`mem-setup` installs three skills that help Claude learn from your codebase over time. It tracks facts, hypotheses, and confirmed rules — so patterns discovered in one session are automatically applied in future sessions.
+
+### Three Skills
+
+| Skill | When | What |
+|-------|------|------|
+| `/mem-setup` | Once per project | Creates `/knowledge/` directory and domain folders |
+| `/mem-load` | Task start | Loads relevant domain rules and hypotheses |
+| `/mem-save` | Task end | Extracts insights and saves to knowledge files |
 
 ### Three Types of Knowledge
 
@@ -14,22 +22,15 @@ A Claude Code skill that installs a self-improving domain knowledge system for a
 | **Hypotheses** | `hypotheses.md` | Patterns needing more data (tracked with confirmation counts) |
 | **Rules** | `rules.md` | Hypotheses confirmed 5+ times — applied by default |
 
-### Two Commands
-
-| Command | When | What |
-|---------|------|------|
-| `/mem-load` | Task start (auto via CLAUDE.md) | Loads relevant domain rules and hypotheses |
-| `/mem-save` | Task end (prompted on "done/finished") | Extracts insights and saves to knowledge files |
-
 ## Install
 
 ```bash
 npx skills add dickwu/mem-setup
 ```
 
-Works with Claude Code, Cursor, Codex, and any agent supporting the `.agents/skills/` convention.
+Works with Claude Code, Cursor, Codex, and any agent supporting the skills convention. The skills CLI handles agent detection automatically.
 
-**After installing, run `/mem-setup` in your AI coding agent to initialize the knowledge directory.** This creates the `/knowledge/` folder structure, installs `/mem-load` and `/mem-save` commands, and adds auto-load instructions to your project's `CLAUDE.md` (or equivalent).
+Installing gives you all three skills. Run `/mem-setup` once in your AI coding agent to create the `/knowledge/` directory and add auto-load instructions to your project config.
 
 ## How It Works
 
@@ -52,13 +53,20 @@ Rules aren't permanent. If new evidence contradicts a rule, `/mem-save` demotes 
 
 ## Directory Structure
 
-After running `/mem-setup`, your project gets:
+**This repo:**
+
+```
+mem-setup/
+  skills/
+    mem-setup/SKILL.md    # Project initialization skill
+    mem-load/SKILL.md     # Domain knowledge loader
+    mem-save/SKILL.md     # Insight extractor and saver
+```
+
+**Your project after running `/mem-setup`:**
 
 ```
 your-project/
-  .claude/commands/       # Claude Code (or .cursor/rules/ for Cursor)
-    mem-load.md
-    mem-save.md
   knowledge/
     INDEX.md              # Routes to domain folders
     api/                  # Example domain
